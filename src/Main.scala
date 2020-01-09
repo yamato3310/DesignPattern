@@ -36,17 +36,17 @@ class User(private var wallet: Int,val budget: Int, val maxBeautyPercentage: Dou
   private def notBuy(product: Product): Unit = println(s"${product.price}円の${product.name}を購入しませんでした")
   private def setWallet(price: Int): Unit = wallet -= price
   def getWallet(): Int = wallet
-  def shopping(shop: Shop, strategy: ShoppingStrategy): Unit = shop.products.foreach(product => if(strategy.isBuyJudgment(this, product)) buy(product) else notBuy(product))
+  def shopping(shop: Shop, strategy: ShoppingStrategy): Unit = shop.products.foreach(product => if(strategy.isBuy(this, product)) buy(product) else notBuy(product))
 }
 
 case class Shop(products: List[Product])
 
 trait ShoppingStrategy {
-  def isBuyJudgment(user: User, product: Product): Boolean
+  def isBuy(user: User, product: Product): Boolean
 }
 
 class UnlimitedGenreStrategy() extends ShoppingStrategy {
-  override def isBuyJudgment(user: User, product: Product): Boolean = {
+  override def isBuy(user: User, product: Product): Boolean = {
     val budgetPercentage = product.price.toDouble / user.budget
     product.genre match {
       case _ if user.getWallet() < product.price => false
