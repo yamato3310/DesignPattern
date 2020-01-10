@@ -18,6 +18,7 @@ object Main extends App {
 
 class ProductRepository() {
   private val genres = List("beauty", "food", "toy")
+
   def create(num: Int): List[Product] = for {
     i <- (1 to num).toList
   } yield {
@@ -28,31 +29,37 @@ class ProductRepository() {
 
 case class Product(id: Int, name: String, price: Int, genre: String)
 
-class User(private var wallet: Int,val budget: Int, val maxBeautyPercentage: Double, val maxFoodPercentage: Double, val maxToyPercentage: Double) {
+class User(private var wallet: Int, val budget: Int, val maxBeautyPercentage: Double, val maxFoodPercentage: Double, val maxToyPercentage: Double) {
   private def buy(product: Product): Unit = {
     setWallet(product.price)
     println(s"${product.price}円の${product.name} を購入した！　残り$wallet 円")
   }
+
   private def notBuy(product: Product): Unit = println(s"${product.price}円の${product.name}を購入しませんでした")
+
   private def setWallet(price: Int): Unit = wallet -= price
+
   def getWallet(): Int = wallet
-  def shopping(shop: Shop, strategy: ShoppingStrategy): Unit = shop.products.foreach(product => if(strategy.isBuy(this, product)) buy(product) else notBuy(product))
+
+  def shopping(shop: Shop, strategy: ShoppingStrategy): Unit =
+    shop.products.foreach(product => if (strategy.judgeBuy(this, product)) buy(product) else notBuy(product))
 }
 
 case class Shop(products: List[Product])
 
 trait ShoppingStrategy {
-  def isBuy(user: User, product: Product): Boolean
+  def judgeBuy(user: User, product: Product): Boolean
 }
 
 class UnlimitedGenreStrategy() extends ShoppingStrategy {
-  override def isBuy(user: User, product: Product): Boolean = {
+  override def judgeBuy(user: User, product: Product): Boolean = {
     val budgetPercentage = product.price.toDouble / user.budget
+    println(budgetPercentage)
     product.genre match {
       case _ if user.getWallet() < product.price => false
-      case "beauty"                              => budgetPercentage <= user.maxBeautyPercentage
-      case "food"                                => budgetPercentage <= user.maxFoodPercentage
-      case "toy"                                 => budgetPercentage <= user.maxToyPercentage
+      case "beauty" => budgetPercentage <= user.maxBeautyPercentage
+      case "food" => budgetPercentage <= user.maxFoodPercentage
+      case "toy" => budgetPercentage <= user.maxToyPercentage
     }
   }
 }
