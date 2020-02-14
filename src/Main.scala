@@ -1,17 +1,17 @@
 /*
-
+Mainの中でレストランのインスタンスを作りたくない　→　
 */
 
 import scala.math._
 
 object Main extends App {
-  val italianRestaurantFactory: ItalianRestaurantFactory = new ItalianRestaurantFactory
-  val italianRestaurant: ItalianRestaurant = italianRestaurantFactory.create(10)
-  italianRestaurant.printMenu()
+  val restaurantBuilder = new RestaurantBuilder(new ItalianRestaurantFactory)
+  val restaurant = restaurantBuilder.build(10)
+  restaurant.printMenu()
+}
 
-  val familyRestaurantFactory: WesternFoodRestaurantFactory = new WesternFoodRestaurantFactory
-  val familyRestaurant: WesternFoodRestaurant = familyRestaurantFactory.create(15)
-  familyRestaurant.printMenu()
+class RestaurantBuilder(restaurant: RestaurantFactory) {
+  def build(menuNum: Int): Restaurant = restaurant.create(menuNum)
 }
 
 // レストランの抽象クラス。今回はメニューを表示するだけ
@@ -32,7 +32,7 @@ case class Menu(name: String, price: Int)
 // レストランのFactoryクラス
 trait RestaurantFactory {
   // この関数を呼ぶことで、レストランを作成することができる
-  def create(MenuNum: Int): Restaurant
+  def create(menuNum: Int): Restaurant
 }
 
 // イタリアンレストランの抽象クラス
@@ -51,7 +51,7 @@ class ItalianRestaurantFactory() extends RestaurantFactory {
 class WesternFoodRestaurantFactory() extends RestaurantFactory {
   // 洋食レストランを作成するための初期処理を行っている
   override def create(menuNum: Int): WesternFoodRestaurant = {
-    val menuSuffix = Seq("Steak", "Plate", "Set")
+    val menuSuffix = Seq("Steak", "Croquette", "Hamburger")
     val menu = (0 to menuNum).map(i => {
       Menu(s"WesternFood${menuSuffix(i % 3)}$i", (random() * 2000).toInt)
     })
