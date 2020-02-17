@@ -1,17 +1,13 @@
-/*
-Mainの中でレストランのインスタンスを作りたくない　→　
-*/
 
 import scala.math._
 
 object Main extends App {
-  val restaurantBuilder = new RestaurantBuilder(new ItalianRestaurantFactory)
-  val restaurant = restaurantBuilder.build(10)
-  restaurant.printMenu()
-}
+  execution(new ItalianRestaurantFactory)
 
-class RestaurantBuilder(restaurant: RestaurantFactory) {
-  def build(menuNum: Int): Restaurant = restaurant.create(menuNum)
+  def execution(restaurantFactory: RestaurantFactory): Unit = {
+    val restaurant = restaurantFactory.create(10)
+    restaurant.printMenu()
+  }
 }
 
 // レストランの抽象クラス。今回はメニューを表示するだけ
