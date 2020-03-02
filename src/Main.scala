@@ -2,55 +2,51 @@
 import scala.math._
 
 object Main extends App {
-  execution(new ItalianRestaurantFactory)
+  // 商品を作っている
+  val product1 = Product("product1", 100)
+  val product2 = Product("product2", 200)
+  val product3 = Product("product3", 300)
+  val product4 = Product("product4", 400)
+  val product5 = Product("product5", 500)
 
-  def execution(restaurantFactory: RestaurantFactory): Unit = {
-    val restaurant = restaurantFactory.create(10)
-    restaurant.printMenu()
-  }
+  // 商品ラックを作っている
+  val rack1 = Rack("rack1", Seq(product1, product2, product3))
+  val rack2 = Rack("rack1", Seq(product1, product2, product3))
+  val rack3 = Rack("rack1", Seq(product1, product2, product3))
+  val rack4 = Rack("rack1", Seq(product1, product2, product3))
+  val rack5 = Rack("rack2", Seq(product4, product5, product1, rack1))
+  val rack6 = Rack("rack3", Seq(product1, product2, product4, rack2, rack3))
+
+  // 倉庫を作っている
+  val warehouse = Warehouse("warehouse1", Seq(rack4, rack5, rack6))
+  println("この倉庫のproduct1の数は", warehouse.search("product1"))
 }
 
-// レストランの抽象クラス。今回はメニューを表示するだけ
-trait Restaurant {
-  val menu: Seq[Menu]
-  def printMenu(): Unit = println(menu)
+// 葉と節のインターフェース
+trait Component {
+  val name: String
+  // 再帰処理で使用する葉と節の関数
+  def search(productName: String): Int
 }
 
-// イタリアンレストラン
-class ItalianRestaurant(val menu: Seq[Menu]) extends Restaurant
-
-// 洋食レストラン
-class WesternFoodRestaurant(val menu: Seq[Menu]) extends Restaurant
-
-// レストランのメニュー
-case class Menu(name: String, price: Int)
-
-// レストランのFactoryクラス
-trait RestaurantFactory {
-  // この関数を呼ぶことで、レストランを作成することができる
-  def create(menuNum: Int): Restaurant
+// 商品
+case class Product(name: String, price: Int) extends Component {
+  // 商品の場合は同じ商品名であれば１を返す
+  override def search(productName: String): Int = if(name == productName) 1 else 0
 }
 
-// イタリアンレストランの抽象クラス
-class ItalianRestaurantFactory() extends RestaurantFactory {
-  // イタリアンレストランを作成するための初期処理を行っている
-  override def create(menuNum: Int): ItalianRestaurant = {
-    val menuSuffix = Seq("Pasta", "Pizza", "Soup")
-    val menu = (0 to menuNum).map(i => {
-      Menu(s"Italian${menuSuffix(i % 3)}$i", (random() * 2000).toInt)
-    })
-    new ItalianRestaurant(menu)
-  }
+// 商品ラック
+case class Rack(name: String, componentList: Seq[Component]) extends Component {
+    // 商品ラックの場合は自身の要素に対してsearch関数を実行する
+  override def search(productName: String): Int = componentList.foldLeft(0)((total, component) => {
+    total + component.search(productName)
+  })
 }
 
-// 洋食レストランの抽象クラス
-class WesternFoodRestaurantFactory() extends RestaurantFactory {
-  // 洋食レストランを作成するための初期処理を行っている
-  override def create(menuNum: Int): WesternFoodRestaurant = {
-    val menuSuffix = Seq("Steak", "Croquette", "Hamburger")
-    val menu = (0 to menuNum).map(i => {
-      Menu(s"WesternFood${menuSuffix(i % 3)}$i", (random() * 2000).toInt)
-    })
-    new WesternFoodRestaurant(menu)
-  }
+// 倉庫
+case class Warehouse(name: String, componentList: Seq[Component]) extends Component {
+  // 倉庫の場合も自身の要素に対してsearch関数を実行する
+  override def search(productName: String): Int = componentList.foldLeft(0)((total, component) => {
+    total + component.search(productName)
+  })
 }
