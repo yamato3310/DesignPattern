@@ -36,8 +36,8 @@ class Compiler() {
     case head :: tail if tail == Nil && stack.length > 3 =>
       val partialTree = createPartTree(head, stack.pop(), stack.pop())
       compile(Seq(partialTree), 50)
-   /*
-   最後のノードで木構造を完成させる
+    /*
+    最後のノードで木構造を完成させる
     */
     case head :: tail if tail == Nil =>
       val woodStructure = createPartTree(head, stack.pop(), stack.pop())
@@ -191,7 +191,7 @@ class NodeParser() {
 /*
 数字と記号の抽象
 leftとrightがNoneのNodeは葉ノード
-leftとrightにNodeがある場合は節ノード
+leftとrightにNodeがある場合は内部ノード
  */
 trait Node {
   val priority: Int
