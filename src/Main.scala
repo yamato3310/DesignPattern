@@ -21,7 +21,7 @@ object Main extends App {
   println(result)
 }
 /*
-Seq[Node]を受け取り木構造に変換する
+Seq[Node]を受け取り木構造に変換し、変換した木構造の計算結果を返す
  */
 class Compiler() {
   private val stack: mutable.Stack[Node] = mutable.Stack()
