@@ -14,20 +14,22 @@ object Main extends App {
 //  val in = "3 + 6 * (6 + 5) - (7 * 2)"
 //  val in = "602 % 3 * 3"
   val nodeParser = new NodeParser()
-  val nodeSeq = nodeParser.conversion(in)
+  val nodeSeq = nodeParser.parse(in)
   val compiler = new Compiler()
-  val structureTree = compiler.compile(nodeSeq)
+  val result = compiler.compile(nodeSeq)
 
-  println(structureTree.result())
+  println(result)
 }
-
+/*
+Seq[Node]を受け取り木構造に変換する
+ */
 class Compiler() {
   private val stack: mutable.Stack[Node] = mutable.Stack()
 
   /*
   ノードのリストから木構造を作成する
   */
-  def compile(nodes: Seq[Node], currentPriority: Int = 0): Node = nodes match {
+  def compile(nodes: Seq[Node], currentPriority: Int = 0): Int = nodes match {
     /*
     スタックに3ノード以上ある場合は、終了せずに再帰を続ける
      */
@@ -38,7 +40,8 @@ class Compiler() {
    最後のノードで木構造を完成させる
     */
     case head :: tail if tail == Nil =>
-      createPartTree(head, stack.pop(), stack.pop())
+      val woodStructure =createPartTree(head, stack.pop(), stack.pop())
+      woodStructure.result()
     /*
     数字のノードの場合は必ずstackさせる
      */
@@ -93,7 +96,7 @@ class NodeParser() {
   入力された文字をNodeに変換をしていく
   基本は空白が来るたびに、プロパティの値を見てNodeに変換をする
    */
-  def conversion(in: String): Seq[Node] = {
+  def parse(in: String): Seq[Node] = {
     val isNum = """[0-9]""".r
     val isSign = """[\*/\+\-\^%]""".r
     val isBrackets = """[\(\)]""".r
@@ -187,6 +190,8 @@ class NodeParser() {
 
 /*
 数字と記号の抽象
+leftとrightがNoneのNodeは葉ノード
+leftとrightにNodeがある場合は節ノード
  */
 trait Node {
   val priority: Int
