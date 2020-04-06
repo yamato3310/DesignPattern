@@ -9,9 +9,9 @@ import scala.math.pow
 */
 
 object Main extends App {
-  val in = "(1 + (6 / 3)) * (7 - 3)"
+//  val in = "(1 + (6 / 3)) * (7 - 3)"
 //  val in = "(1 + 2) + (7 - 3)"
-//  val in = "3 + 6 * (6 + 5) - (7 * 2)"
+  val in = "3 + 6 * (6 + 5) - (7 * 2)"
 //  val in = "602 % 3 * 3"
   val nodeParser = new NodeParser()
   val nodeSeq = nodeParser.parse(in)
@@ -40,7 +40,7 @@ class Compiler() {
    最後のノードで木構造を完成させる
     */
     case head :: tail if tail == Nil =>
-      val woodStructure =createPartTree(head, stack.pop(), stack.pop())
+      val woodStructure = createPartTree(head, stack.pop(), stack.pop())
       woodStructure.result()
     /*
     数字のノードの場合は必ずstackさせる
