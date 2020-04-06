@@ -9,10 +9,10 @@ import scala.math.pow
 */
 
 object Main extends App {
-//  val in = "(1 + (6 / 3)) * (7 - 3)"
+  val in = "(1 + (6 / 3)) * (7 - 3)"
 //  val in = "(1 + 2) + (7 - 3)"
 //  val in = "3 + 6 * (6 + 5) - (7 * 2)"
-  val in = "602 % 3 * 3"
+//  val in = "602 % 3 * 3"
   val nodeParser = new NodeParser()
   val nodeSeq = nodeParser.conversion(in)
   val compiler = new Compiler()
@@ -118,7 +118,7 @@ class NodeParser() {
   /*
   数字の場合、数字は2桁以上の場合ああるので、それを考慮している
    */
-  def patternInt(s: String): Unit = s match {
+  private def patternInt(s: String): Unit = s match {
     case s if currentPriority == 10 =>
       currentString += s
       spaceFlg = false
@@ -135,7 +135,7 @@ class NodeParser() {
   /*
   記号が入力された時の処理
    */
-  def patternSign(s: String): Unit = s match {
+  private def patternSign(s: String): Unit = s match {
     case _ if !spaceFlg =>
       throw new Exception("sign 空白の位置が正しくありません")
     case s if currentPriority != 20 && currentPriority != 30  =>
@@ -151,7 +151,7 @@ class NodeParser() {
   Nodeに変換する際にカッコは変換せずに、カッコ内の数字と記号のpriorityを上げる処理をする
   そのためのフラグ管理などを行っている
    */
-  def patternBrackets(s: String): Unit = s match {
+  private def patternBrackets(s: String): Unit = s match {
     case s if s == "(" && (currentPriority == 20 || currentPriority == 0) =>
       currentPriority = 30
       bracketsPriority += 100
@@ -166,7 +166,7 @@ class NodeParser() {
   /*
   受け取った文字からNodeを作成している
    */
-  def createNode(s: String): Node = currentPriority match {
+  private def createNode(s: String): Node = currentPriority match {
     case i if i == 10 => new Number(s, None, None, 10 + bracketsPriority)
     case _ if s == "+" => new Sign(s, None, None, 20 + bracketsPriority)
     case _ if s == "-" => new Sign(s, None, None, 20 + bracketsPriority)
