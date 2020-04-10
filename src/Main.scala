@@ -38,22 +38,22 @@ class Compiler(in: String) {
     スタックに3ノード以上ある場合は、終了せずに再帰を続ける
     　*/
     case ::(head: Node, Nil) if stack.length > 3 =>
-      val partialTree = createPartTree(head, stack.pop(), stack.pop())
-      compile(List(partialTree), 50)
+      val partialAst = createPartTree(head, stack.pop(), stack.pop())
+      compile(List(partialAst), 50)
     /*
     木構造が完成したら、計算結果を返す
     　*/
     case ::(head: Node, Nil) =>
-      val woodStructure = createPartTree(head, stack.pop(), stack.pop())
-      woodStructure.result()
+      val ast = createPartTree(head, stack.pop(), stack.pop())
+      ast.result()
     /*
     ) が来た場合は、stack内のノードを計算しNumberにした後に、退避させていたNodeを戻す
      */
     case ::(head: Brackets, tail) if head.value == ")"  =>
-      val partialTree = createPartTree(stack.pop(), stack.pop(), stack.pop())
+      val partialAst = createPartTree(stack.pop(), stack.pop(), stack.pop())
       stack.pushAll(tempStack.pop())
       val currentPriority = priorityQueue.dequeue()
-      compile(new Number(partialTree.result().toString) +: tail, currentPriority)
+      compile(new Number(partialAst.result().toString) +: tail, currentPriority)
     /*
     ( が来た場合は、stackをすべて退避させる
      */
@@ -78,8 +78,8 @@ class Compiler(in: String) {
     最後に現在のstackの中身にNodeが一つしか存在しない場合、次の要素をstackするために現在の優先順位を下げる
      */
     case ::(head: Sign, tail) if currentPriority >= head.priority =>
-      val partialTree = createPartTree(stack.pop(), stack.pop(), stack.pop())
-      stack.push(partialTree)
+      val partialAst = createPartTree(stack.pop(), stack.pop(), stack.pop())
+      stack.push(partialAst)
       val priority = if (stack.length == 1) 0 else currentPriority
       compile(head :: tail, priority)
     case node => throw new Exception(s"no match $node")
