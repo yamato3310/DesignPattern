@@ -9,16 +9,17 @@ import scala.math.pow
 */
 
 object Main extends App {
-  val in = "( 1 + ( 6 / 3 )) * ( 7 - 3 )"
+  val in = "( 1 + ( 6 / 3 ) ) * ( 7 - 3 )"
 //  val in = "( 1 * 2 ) * ( 3 * 4 )"
 //  val in = "3 + 6 * ( 6 + 5 ) * ( 7 * 2 )"
-//  val in = "602 % 3 * 3"
+//  val in = "602 % 0 * 3"
 //  val in = "1 + 4"
   val compiler = new Compiler(in)
   val result = compiler.compile()
 
   println(result)
 }
+
 /*
 計算式を受け取り木構造に変換し、変換した木構造から計算結果を出す
  */
@@ -70,14 +71,14 @@ class Compiler(in: String) {
     /*
     現在の優先順位より高いものが来た場合はstackする
      */
-    case ::(head: Sign, tail) if currentPriority < head.priority =>
+    case ::(head: Sign[_], tail) if currentPriority < head.priority =>
       stack.push(head)
       compile(tail, head.priority)
     /*
     初めに現在の優先順位より低いものが来た場合は、stack内の要素で部分木を作成する
     最後に現在のstackの中身にNodeが一つしか存在しない場合、次の要素をstackするために現在の優先順位を下げる
      */
-    case ::(head: Sign, tail) if currentPriority >= head.priority =>
+    case ::(head: Sign[_], tail) if currentPriority >= head.priority =>
       val partialAst = createPartAst(stack.pop(), stack.pop(), stack.pop())
       stack.push(partialAst)
       val priority = if (stack.length == 1) 0 else currentPriority
@@ -88,8 +89,12 @@ class Compiler(in: String) {
   /*
   ノードと符号を受け取ることで部分木を作成する
    */
-  def createPartAst(left: Node, symbol: Node, right: Node): Node = {
-    new Sign(symbol.value, Some(left), Some(right))
+  def createPartAst(left: Node, symbol: Node, right: Node): Node = symbol match {
+    case _: Addition[_]       => new Addition[Some[Node]](Some(left), Some(right))
+    case _: Multiplication[_] => new Multiplication[Some[Node]](Some(left), Some(right))
+    case _: Subtraction[_]    => new Subtraction[Some[Node]](Some(left), Some(right))
+    case _: Division[_]       => new Division[Some[Node]](Some(left), Some(right))
+    case _: Remainder[_]      => new Remainder[Some[Node]](Some(left), Some(right))
   }
 
   /*
@@ -143,7 +148,7 @@ class NodeParser() {
   数字の場合、数字は2桁以上の場合ああるので、それを考慮している
    */
   private def patternInt(s: String): Unit = partsSeq.lastOption match {
-    case Some(_: Sign) if !spaceFlg =>
+    case Some(_: Sign[_]) if !spaceFlg =>
       throw new Exception("空白の位置が正しくありません")
     case Some(_: Number) =>
       throw new Exception("文法が正しくありません")
@@ -158,14 +163,13 @@ class NodeParser() {
   private def patternSign(s: String): Parts = partsSeq.lastOption match {
     case _ if !spaceFlg =>
       throw new Exception("空白の位置が正しくありません")
-    case Some(_: Sign)  =>
+    case Some(_: Sign[_])  =>
       throw new Exception("文法が正しくありません")
     case None =>
       throw new Exception("文法が正しくありません")
     case _ =>
       spaceFlg = false
       createNode(s)
-
   }
 
   /*
@@ -180,7 +184,7 @@ class NodeParser() {
     case Some(_: Brackets) if (s == ")" && bracketsCount > 0) =>
       bracketsCount += 1
       createNode(s)
-    case Some(_: Sign) if s == "(" =>
+    case Some(_: Sign[_]) if s == "(" =>
       bracketsCount += 1
       createNode(s)
     case None =>
@@ -196,13 +200,12 @@ class NodeParser() {
   private def createNode(s: String): Parts = s match {
     case "(" => new Brackets(s)
     case ")" => new Brackets(s)
-    case "+" => new Sign(s, None, None)
-    case "-" => new Sign(s, None, None)
-    case "/" => new Sign(s, None, None)
-    case "*" => new Sign(s, None, None)
-    case "%" => new Sign(s, None, None)
-    case "^" => new Sign(s, None, None)
-    case i => new Number(i)
+    case "+" => new Addition[None.type](None, None)
+    case "-" => new Subtraction[None.type](None, None)
+    case "/" => new Division[None.type](None, None)
+    case "*" => new Multiplication[None.type](None, None)
+    case "%" => new Remainder[None.type](None, None)
+    case i   => new Number(i)
   }
 
   /*
@@ -227,25 +230,50 @@ trait Parts {
   val value: String
 }
 
-class Sign(val value: String, val left: Option[Node], val right: Option[Node]) extends Node {
-  val priority: Int = value match {
-    case "+" => 1
-    case "-" => 1
-    case "/" => 2
-    case "*" => 2
-    case "%" => 2
-    case "^" => 3
-    case _ => throw new Exception(s"存在しない文字 $value")
-  }
+trait Sign[T <: Option[Node]] extends Node {
+  val left: T
+  val right: T
+  val priority: Int
+}
 
-  override def result(): Int = value match {
-    case "+" => right.fold(0)(_.result()) + left.fold(0)(_.result())
-    case "-" => right.fold(0)(_.result()) - left.fold(0)(_.result())
-    case "/" => right.fold(0)(_.result()) / left.fold(0)(_.result())
-    case "*" => right.fold(0)(_.result()) * left.fold(0)(_.result())
-    case "%" => right.fold(0)(_.result()) % left.fold(0)(_.result())
-    case "^" => pow(right.fold(0)(_.result()), left.fold(0)(_.result())).toInt
-    case _ => throw new Exception(s"存在しないパターン $value")
+class Addition[T <: Option[Node]](val left: T, val right: T) extends Sign[T]{
+  override val value: String = "+"
+  override val priority: Int = 1
+
+  override def result(): Int = right.fold(0)(_.result()) + left.fold(0)(_.result())
+}
+
+class Multiplication[T <: Option[Node]](val left: T, val right: T) extends Sign[T] {
+  override val value: String = "*"
+  override val priority: Int = 2
+
+  override def result():Int = right.fold(0)(_.result()) * left.fold(0)(_.result())
+}
+
+class Subtraction[T <: Option[Node]](val left: T, val right: T) extends Sign[T] {
+  override val value: String = "-"
+  override val priority: Int = 1
+
+  override def result():Int = right.fold(0)(_.result()) - left.fold(0)(_.result())
+}
+
+class Division[T <: Option[Node]](val left: T, val right: T) extends Sign[T] {
+  override val value: String = "/"
+  override val priority: Int = 2
+
+  override def result():Int = {
+    if (left.fold(0)(_.result()) == 0) throw new Exception("右辺に0が使用されています")
+    right.fold(0)(_.result()) / left.fold(0)(_.result())
+  }
+}
+
+class Remainder[T <: Option[Node]](val left: T, val right: T) extends Sign[T] {
+  override val value: String = "%"
+  override val priority: Int = 2
+
+  override def result():Int = {
+    if (left.fold(0)(_.result()) == 0) throw new Exception("右辺に0が使用されています")
+    right.fold(0)(_.result()) % left.fold(0)(_.result())
   }
 }
 
