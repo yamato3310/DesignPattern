@@ -24,16 +24,16 @@ object Main extends App {
  */
 class Compiler(in: String) {
   private val nodeParser = new NodeParser
-  val partsList: List[Parts] = nodeParser.parse(in)
+  val partList: List[Part] = nodeParser.parse(in)
   private val stack: mutable.Stack[Node] = mutable.Stack()
   private val tempStack: mutable.Stack[IterableOnce[Node]] = mutable.Stack()
   private val priorityQueue: mutable.Queue[Int] = mutable.Queue()
 
   /*
-  PartsをNodeに変換し木構造を作成する
-  Partsはカッコを含むため、木構造ではカッコをなくすため
+  PartをNodeに変換し木構造を作成する
+  Partはカッコを含むため、木構造ではカッコをなくすため
   　*/
-  def compile(parts: List[Parts] = partsList, currentPriority: Int = 0): Int = parts match {
+  def compile(parts: List[Part] = partList, currentPriority: Int = 0): Int = parts match {
     /*
     スタックに3ノード以上ある場合は、終了せずに再帰を続ける
     　*/
@@ -101,7 +101,7 @@ class Compiler(in: String) {
   */
   def print(): Unit = {
     println("====")
-    partsList.foreach(node => println(node.value))
+    partList.foreach(node => println(node.value))
     println("====")
   }
 }
@@ -112,41 +112,41 @@ class Compiler(in: String) {
 class NodeParser() {
   private var numberDigit: String = ""
   private var spaceFlg: Boolean = true
-  private var partsSeq: List[Parts] = List()
+  private var partSeq: List[Part] = List()
   private var bracketsCount: Int = 0
 
 
   /*
   入力された文字をPartsに変換をしていく
    */
-  def parse(in: String): List[Parts] = {
+  def parse(in: String): List[Part] = {
     val isNum = """[0-9]""".r
     val isSign = """[\*/\+\-\^%]""".r
     val isBrackets = """[\(\)]""".r
     in.split("").foreach(s => s match {
       case isNum() => patternInt(s)
-      case isSign() => partsSeq = partsSeq :+ patternSign(s)
-      case isBrackets() => partsSeq = partsSeq :+ patternBrackets(s)
+      case isSign() => partSeq = partSeq :+ patternSign(s)
+      case isBrackets() => partSeq = partSeq :+ patternBrackets(s)
       case s if s == " " =>
         spaceFlg = true
         if (numberDigit != "") {
-          partsSeq = partsSeq :+ createNode(numberDigit)
+          partSeq = partSeq :+ createNode(numberDigit)
           numberDigit = ""
         }
       case _ =>
     })
 
     if (numberDigit != "") {
-      partsSeq = partsSeq :+ createNode(numberDigit)
+      partSeq = partSeq :+ createNode(numberDigit)
       numberDigit = ""
     }
-    partsSeq
+    partSeq
   }
 
   /*
   数字の場合、数字は2桁以上の場合ああるので、それを考慮している
    */
-  private def patternInt(s: String): Unit = partsSeq.lastOption match {
+  private def patternInt(s: String): Unit = partSeq.lastOption match {
     case Some(_: Sign[_]) if !spaceFlg =>
       throw new Exception("空白の位置が正しくありません")
     case Some(_: Number) =>
@@ -159,7 +159,7 @@ class NodeParser() {
   /*
   記号が入力された時の処理
    */
-  private def patternSign(s: String): Parts = partsSeq.lastOption match {
+  private def patternSign(s: String): Part = partSeq.lastOption match {
     case _ if !spaceFlg =>
       throw new Exception("空白の位置が正しくありません")
     case Some(_: Sign[_])  =>
@@ -174,7 +174,7 @@ class NodeParser() {
   /*
   カッコが入ってきた時の処理
    */
-  private def patternBrackets(s: String): Parts = partsSeq.lastOption match {
+  private def patternBrackets(s: String): Part = partSeq.lastOption match {
     case _ if !spaceFlg =>
       throw new Exception("空白の位置が正しくありません")
     case Some(_: Number) if (s == ")" && bracketsCount > 0) =>
@@ -196,7 +196,7 @@ class NodeParser() {
   /*
   受け取った文字からNodeを作成している
    */
-  private def createNode(s: String): Parts = s match {
+  private def createNode(s: String): Part = s match {
     case "(" => new Brackets(s)
     case ")" => new Brackets(s)
     case "+" => new Addition[None.type](None, None)
@@ -212,7 +212,7 @@ class NodeParser() {
    */
   def print(): Unit = {
     println("====")
-    partsSeq.foreach(node => println(node.value))
+    partSeq.foreach(node => println(node.value))
     println("====")
   }
 }
@@ -221,11 +221,11 @@ class NodeParser() {
 /*
 数字と記号の抽象
  */
-trait Node extends Parts {
+trait Node extends Part {
   def result(): Int
 }
 
-trait Parts {
+trait Part {
   val value: String
 }
 
@@ -280,4 +280,4 @@ class Number(val value: String) extends Node {
   override def result(): Int = value.toInt
 }
 
-class Brackets(val value: String) extends Parts
+class Brackets(val value: String) extends Part
