@@ -1,5 +1,4 @@
 import scala.collection.mutable
-import scala.math.pow
 
 /*
 電卓仕様
